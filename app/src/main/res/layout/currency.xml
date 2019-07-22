@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingTop="@dimen/vertical_space"
+    android:paddingBottom="@dimen/vertical_space">
+
+    <ImageView
+        android:id="@+id/currency__icon"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_marginStart="@dimen/horizontal_space"
+        android:layout_marginLeft="@dimen/horizontal_space"
+        android:contentDescription="@string/icon"
+        android:scaleType="fitCenter"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:src="@drawable/ic_united_kingdom" />
+
+    <TextView
+        android:id="@+id/currency__title"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/horizontal_space"
+        android:layout_marginLeft="@dimen/horizontal_space"
+        android:layout_marginEnd="@dimen/horizontal_space"
+        android:layout_marginRight="@dimen/horizontal_space"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/currency__subtitle"
+        app:layout_constraintEnd_toStartOf="@+id/currency__value"
+        app:layout_constraintHorizontal_bias="0"
+        app:layout_constraintStart_toEndOf="@+id/currency__icon"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_chainStyle="packed"
+        tools:text="GBR" />
+
+    <TextView
+        android:id="@+id/currency__subtitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textSize="16sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="@+id/currency__title"
+        app:layout_constraintHorizontal_bias="0"
+        app:layout_constraintStart_toStartOf="@+id/currency__title"
+        app:layout_constraintTop_toBottomOf="@+id/currency__title"
+        tools:text="British Pound" />
+
+    <EditText
+        android:id="@+id/currency__value"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="@dimen/horizontal_space"
+        android:layout_marginRight="@dimen/horizontal_space"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="99,79" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
