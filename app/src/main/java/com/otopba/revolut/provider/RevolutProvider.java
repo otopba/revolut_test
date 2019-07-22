@@ -1,9 +1,9 @@
-package com.otopba.revolut.api;
+package com.otopba.revolut.provider;
 
 import androidx.annotation.NonNull;
 
-import com.otopba.revolut.CurrencyProvider;
 import com.otopba.revolut.CurrencyValue;
+import com.otopba.revolut.api.RevolutApi;
 
 import io.reactivex.Single;
 import retrofit2.Retrofit;

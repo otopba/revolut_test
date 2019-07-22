@@ -11,10 +11,10 @@ public class CurrencyViewModel {
     public final int title;
     @StringRes
     public final int subtitle;
-    public final double value;
+    public final String value;
 
     public CurrencyViewModel(@DrawableRes int icon, @StringRes int title, @StringRes int subtitle,
-                             double value) {
+                             String value) {
         this.icon = icon;
         this.title = title;
         this.subtitle = subtitle;

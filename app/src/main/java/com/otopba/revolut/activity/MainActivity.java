@@ -1,8 +1,11 @@
-package com.otopba.revolut;
+package com.otopba.revolut.activity;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
+
+import com.otopba.revolut.fragment.CurrencyFragment;
+import com.otopba.revolut.R;
 
 public class MainActivity extends AppCompatActivity {
 

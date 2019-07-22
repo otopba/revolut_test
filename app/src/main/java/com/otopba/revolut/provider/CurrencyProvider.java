@@ -1,6 +1,8 @@
-package com.otopba.revolut;
+package com.otopba.revolut.provider;
 
 import androidx.annotation.NonNull;
+
+import com.otopba.revolut.CurrencyValue;
 
 import io.reactivex.Single;
 

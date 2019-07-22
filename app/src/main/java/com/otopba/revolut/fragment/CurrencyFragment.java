@@ -1,4 +1,4 @@
-package com.otopba.revolut;
+package com.otopba.revolut.fragment;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -13,9 +13,16 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.otopba.revolut.App;
+import com.otopba.revolut.CurrencyAdapter;
+import com.otopba.revolut.provider.CurrencyProvider;
+import com.otopba.revolut.CurrencyViewMaper;
+import com.otopba.revolut.CurrencyViewModel;
+import com.otopba.revolut.R;
+import com.otopba.revolut.utils.Formater;
 
 import java.util.Collections;
 import java.util.List;
@@ -25,7 +32,6 @@ import javax.inject.Inject;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
-import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
 import io.reactivex.subjects.BehaviorSubject;
 
@@ -34,13 +40,15 @@ public class CurrencyFragment extends Fragment {
     public static final String TAG = CurrencyFragment.class.getName();
     private final BehaviorSubject<List<CurrencyViewModel>> currencySubject = BehaviorSubject.create();
     private final CompositeDisposable compositeDisposable = new CompositeDisposable();
-    private final CurrencyViewMaper currencyViewMaper = new CurrencyViewMaper();
 
     @Inject
     CurrencyProvider api;
+    @Inject
+    Formater formater;
 
     private RecyclerView currenciesView;
     private CurrencyAdapter currencyAdapter;
+    private CurrencyViewMaper currencyViewMaper;
 
     public static CurrencyFragment newInstance() {
         return new CurrencyFragment();
@@ -52,8 +60,9 @@ public class CurrencyFragment extends Fragment {
         if (activity == null) {
             throw new RuntimeException("Activity is null");
         }
-
         ((App) activity.getApplication()).getAppComponent().inject(this);
+
+        currencyViewMaper = new CurrencyViewMaper(formater);
         Disposable disposable = api.getCurrency().observeOn(AndroidSchedulers.mainThread())
                 .subscribeOn(Schedulers.io())
                 .doOnSuccess(currencyValue -> setLastUpdateTime(currencyValue.date))
