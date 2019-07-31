@@ -2,7 +2,7 @@ package com.otopba.revolut.provider;
 
 import androidx.annotation.NonNull;
 
-import com.otopba.revolut.CurrencyValue;
+import com.otopba.revolut.api.CurrencyUpdate;
 import com.otopba.revolut.api.RevolutApi;
 
 import io.reactivex.Single;
@@ -10,11 +10,11 @@ import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
 
-public class RevolutProvider implements CurrencyProvider {
+public class RevolutCurrencyProvider implements CurrencyProvider {
 
     private RevolutApi api;
 
-    public RevolutProvider() {
+    public RevolutCurrencyProvider() {
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl("https://revolut.duckdns.org")
                 .addConverterFactory(GsonConverterFactory.create())
@@ -26,7 +26,7 @@ public class RevolutProvider implements CurrencyProvider {
 
     @NonNull
     @Override
-    public Single<CurrencyValue> getCurrency() {
+    public Single<CurrencyUpdate> getCurrency() {
         return api.getCurrency();
     }
 

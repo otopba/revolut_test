@@ -1,6 +1,6 @@
 package com.otopba.revolut.dependency;
 
-import com.otopba.revolut.fragment.CurrencyFragment;
+import com.otopba.revolut.ui.currency.CurrencyFragment;
 
 import javax.inject.Singleton;
 

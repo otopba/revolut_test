@@ -1,4 +1,4 @@
-package com.otopba.revolut.fragment;
+package com.otopba.revolut.ui.currency;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -17,38 +17,30 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.otopba.revolut.App;
-import com.otopba.revolut.CurrencyAdapter;
-import com.otopba.revolut.provider.CurrencyProvider;
-import com.otopba.revolut.CurrencyViewMaper;
-import com.otopba.revolut.CurrencyViewModel;
+import com.otopba.revolut.Currency;
 import com.otopba.revolut.R;
+import com.otopba.revolut.controller.CurrencyController;
 import com.otopba.revolut.utils.Formater;
 
 import java.util.Collections;
-import java.util.List;
+import java.util.Map;
 
 import javax.inject.Inject;
 
 import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.disposables.CompositeDisposable;
-import io.reactivex.disposables.Disposable;
-import io.reactivex.schedulers.Schedulers;
-import io.reactivex.subjects.BehaviorSubject;
 
-public class CurrencyFragment extends Fragment {
+public class CurrencyFragment extends Fragment implements CurrencyAdapter.Listener, CurrencyController.Listener {
 
     public static final String TAG = CurrencyFragment.class.getName();
-    private final BehaviorSubject<List<CurrencyViewModel>> currencySubject = BehaviorSubject.create();
-    private final CompositeDisposable compositeDisposable = new CompositeDisposable();
 
-    @Inject
-    CurrencyProvider api;
     @Inject
     Formater formater;
+    @Inject
+    CurrencyController currencyController;
 
+    private CurrencyAdapterState currencyAdapterState;
     private RecyclerView currenciesView;
     private CurrencyAdapter currencyAdapter;
-    private CurrencyViewMaper currencyViewMaper;
 
     public static CurrencyFragment newInstance() {
         return new CurrencyFragment();
@@ -61,14 +53,7 @@ public class CurrencyFragment extends Fragment {
             throw new RuntimeException("Activity is null");
         }
         ((App) activity.getApplication()).getAppComponent().inject(this);
-
-        currencyViewMaper = new CurrencyViewMaper(formater);
-        Disposable disposable = api.getCurrency().observeOn(AndroidSchedulers.mainThread())
-                .subscribeOn(Schedulers.io())
-                .doOnSuccess(currencyValue -> setLastUpdateTime(currencyValue.date))
-                .map(currencyViewMaper::updateCurrency)
-                .subscribe(currencySubject::onNext);//TODO: обработать ошибки
-        compositeDisposable.add(disposable);
+        currencyAdapterState = new CurrencyAdapterState(formater);
         super.onCreate(savedInstanceState);
     }
 
@@ -79,20 +64,41 @@ public class CurrencyFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_currency, container, false);
         currenciesView = view.findViewById(R.id.fragment_currency__currencies);
         setupRecyclerView(inflater);
-        Disposable disposable = currencySubject
-                .subscribeOn(Schedulers.io())
-                .subscribe(currencyViewModels -> {
-                    currencyAdapter.updateCurrencies(currencyViewModels);
-                    currencyAdapter.notifyDataSetChanged();//TODO: упросить
-                });
-        compositeDisposable.add(disposable);
         return view;
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        currencyController.registerListener(this);
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        currencyController.unregisterListener(this);
+    }
+
     private void setupRecyclerView(@NonNull LayoutInflater inflater) {
-        currencyAdapter = new CurrencyAdapter(inflater, Collections.emptyList());
+        currencyAdapter = new CurrencyAdapter(inflater, Collections.emptyList(), this);
+        currencyAdapter.setHasStableIds(true);
         currenciesView.setAdapter(currencyAdapter);
         currenciesView.setLayoutManager(new LinearLayoutManager(getContext()));
+    }
+
+    @Override
+    public void onCurrencyClick(@NonNull Currency currency) {
+//        Log.d(TAG, String.format("Click on %s", currency));
+//        List<CurrencyViewModel> models = currencyController.selectCurrency(currency);
+//        currencyAdapter.updateCurrencies(models, currencyController.getSelectedCurrency());
+//        currencyAdapter.notifyDataSetChanged();//TODO: упросить
+    }
+
+    @Override
+    public void onCurrencyValueChanged(@Nullable CharSequence text) {
+//        List<CurrencyViewModel> currencyViewModels = currencyController.updateSelectedCurrency(text);
+//        currencyAdapter.updateCurrencies(currencyViewModels, currencyController.getSelectedCurrency());
+//        currencyAdapter.notifyDataSetChanged();//TODO: упросить
     }
 
     private void setLastUpdateTime(@Nullable String lastUpdateTime) {
@@ -117,4 +123,10 @@ public class CurrencyFragment extends Fragment {
         actionBar.setTitle(title);
     }
 
+    @Override
+    public void onUpdate(@NonNull Map<Currency, Double> values, @Nullable Currency mainCurrency) {
+        currencyAdapterState.update(values);
+        currencyAdapter.updateCurrencies(currencyAdapterState.getValues(), mainCurrency);
+        AndroidSchedulers.mainThread().scheduleDirect(() -> currencyAdapter.notifyDataSetChanged());
+    }
 }
