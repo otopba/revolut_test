@@ -26,7 +26,7 @@ public class RevolutCurrencyController implements CurrencyController {
     private final CurrencyProvider provider;
     private Disposable disposable;
     private Currency mainCurrency;
-    private double mainCurrencyValue;
+    private float mainCurrencyValue;
 
     public RevolutCurrencyController(@NonNull CurrencyStorage storage, @NonNull CurrencyProvider provider) {
         this.storage = storage;
@@ -48,12 +48,22 @@ public class RevolutCurrencyController implements CurrencyController {
 
     @Override
     public void setMainCurrency(@NonNull Currency currency) {
+        if (mainCurrency == currency) {
+            return;
+        }
+        if (mainCurrency == null) {
+            mainCurrencyValue = storage.getRate(currency);
+        } else {
+            float mainRate = storage.getRate(mainCurrency);
+            float factor = mainRate == 0 ? 0 : mainCurrencyValue / mainRate;
+            mainCurrencyValue = storage.getRate(currency) * factor;
+        }
         mainCurrency = currency;
         sync();
     }
 
     @Override
-    public void setMainCurrencyValue(double value) {
+    public void setMainCurrencyValue(float value) {
         mainCurrencyValue = value;
         sync();
     }
@@ -70,21 +80,21 @@ public class RevolutCurrencyController implements CurrencyController {
     }
 
     private void sync() {
-        Map<Currency, Double> rates = storage.getRates();
+        Map<Currency, Float> rates = storage.getRates();
         if (mainCurrency == null) {
             notifyUpdate(rates, null);
             return;
         }
-        double mainRate = storage.getRate(mainCurrency);
-        double factor = mainCurrencyValue == 0 ? 0 : mainRate / mainCurrencyValue;
-        Map<Currency, Double> values = new ArrayMap<>(rates.size());
-        for (Map.Entry<Currency, Double> entry : rates.entrySet()) {
+        float mainRate = storage.getRate(mainCurrency);
+        float factor = mainRate == 0 ? 0 : mainCurrencyValue / mainRate;
+        Map<Currency, Float> values = new ArrayMap<>(rates.size());
+        for (Map.Entry<Currency, Float> entry : rates.entrySet()) {
             values.put(entry.getKey(), entry.getValue() * factor);
         }
         notifyUpdate(values, mainCurrency);
     }
 
-    public void notifyUpdate(@NonNull Map<Currency, Double> values, @Nullable Currency mainCurrency) {
+    public void notifyUpdate(@NonNull Map<Currency, Float> values, @Nullable Currency mainCurrency) {
         notifyListeners(listener -> listener.onUpdate(values, mainCurrency));
     }
 

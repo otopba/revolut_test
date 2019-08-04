@@ -10,16 +10,16 @@ import java.util.Map;
 public class InMemoryCurrencyStorage implements CurrencyStorage {
 
     private long date;
-    private Map<Currency, Double> rates;
+    private Map<Currency, Float> rates;
 
     @Override
-    public void saveRates(@NonNull Map<Currency, Double> rates, long date) {
+    public void saveRates(@NonNull Map<Currency, Float> rates, long date) {
         this.rates = rates;
     }
 
     @NonNull
     @Override
-    public Map<Currency, Double> getRates() {
+    public Map<Currency, Float> getRates() {
         if (rates == null) {
             return Collections.emptyMap();
         }
@@ -27,11 +27,11 @@ public class InMemoryCurrencyStorage implements CurrencyStorage {
     }
 
     @Override
-    public double getRate(@NonNull Currency currency) {
+    public float getRate(@NonNull Currency currency) {
         if (rates == null) {
             return 0;
         }
-        Double value = rates.get(currency);
+        Float value = rates.get(currency);
         if (value == null) {
             return 0;
         }

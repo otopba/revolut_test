@@ -8,11 +8,11 @@ import java.util.Map;
 
 public interface CurrencyStorage {
 
-    void saveRates(@NonNull Map<Currency, Double> rates, long date);
+    void saveRates(@NonNull Map<Currency, Float> rates, long date);
 
     @NonNull
-    Map<Currency, Double> getRates();
+    Map<Currency, Float> getRates();
 
-    double getRate(@NonNull Currency currency);
+    float getRate(@NonNull Currency currency);
 
 }

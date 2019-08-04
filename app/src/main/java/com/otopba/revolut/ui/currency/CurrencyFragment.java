@@ -88,17 +88,18 @@ public class CurrencyFragment extends Fragment implements CurrencyAdapter.Listen
 
     @Override
     public void onCurrencyClick(@NonNull Currency currency) {
-//        Log.d(TAG, String.format("Click on %s", currency));
-//        List<CurrencyViewModel> models = currencyController.selectCurrency(currency);
-//        currencyAdapter.updateCurrencies(models, currencyController.getSelectedCurrency());
-//        currencyAdapter.notifyDataSetChanged();//TODO: упросить
+        currencyController.setMainCurrency(currency);
     }
 
     @Override
     public void onCurrencyValueChanged(@Nullable CharSequence text) {
-//        List<CurrencyViewModel> currencyViewModels = currencyController.updateSelectedCurrency(text);
-//        currencyAdapter.updateCurrencies(currencyViewModels, currencyController.getSelectedCurrency());
-//        currencyAdapter.notifyDataSetChanged();//TODO: упросить
+        float value;
+        if (TextUtils.isEmpty(text)) {
+            value = 0;
+        } else {
+            value = formater.formatFromCurrencyValue(text.toString());
+        }
+        currencyController.setMainCurrencyValue(value);
     }
 
     private void setLastUpdateTime(@Nullable String lastUpdateTime) {
@@ -124,8 +125,8 @@ public class CurrencyFragment extends Fragment implements CurrencyAdapter.Listen
     }
 
     @Override
-    public void onUpdate(@NonNull Map<Currency, Double> values, @Nullable Currency mainCurrency) {
-        currencyAdapterState.update(values);
+    public void onUpdate(@NonNull Map<Currency, Float> values, @Nullable Currency mainCurrency) {
+        currencyAdapterState.update(values, mainCurrency);
         currencyAdapter.updateCurrencies(currencyAdapterState.getValues(), mainCurrency);
         AndroidSchedulers.mainThread().scheduleDirect(() -> currencyAdapter.notifyDataSetChanged());
     }

@@ -8,9 +8,9 @@ public class CurrencyUpdate {
 
     public final Currency base;
     public final String date;
-    public final Map<Currency, Double> rates;
+    public final Map<Currency, Float> rates;
 
-    public CurrencyUpdate(Currency base, String date, Map<Currency, Double> rates) {
+    public CurrencyUpdate(Currency base, String date, Map<Currency, Float> rates) {
         this.base = base;
         this.date = date;
         this.rates = rates;

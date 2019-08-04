@@ -5,6 +5,8 @@ import androidx.annotation.NonNull;
 public interface Formater {
 
     @NonNull
-    String formatCurrency(double value);
+    String formatToCurrencyValue(float value);
+
+    float formatFromCurrencyValue(@NonNull String text);
 
 }

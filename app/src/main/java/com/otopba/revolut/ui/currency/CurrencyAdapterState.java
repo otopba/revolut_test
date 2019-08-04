@@ -1,36 +1,54 @@
 package com.otopba.revolut.ui.currency;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.otopba.revolut.Currency;
 import com.otopba.revolut.utils.Formater;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class CurrencyAdapterState {
 
+    private final Map<Currency, CurrencyValue> map = new HashMap<>();
     private final Formater formater;
+    private final Comparator<CurrencyValue> comparator;
+
+    private Currency mainCurrency;
 
     public CurrencyAdapterState(@NonNull Formater formater) {
         this.formater = formater;
+        comparator = (currencyValue1, currencyValue2) -> {
+            if (mainCurrency == null) {
+                return 0;
+            }
+            if (currencyValue1.getModel().currency == mainCurrency) {
+                return -1;
+            }
+            if (currencyValue2.getModel().currency == mainCurrency) {
+                return 1;
+            }
+            return 0;
+        };
     }
 
-    private final Map<Currency, CurrencyValue> map = new HashMap<>();
-
-    public void update(@NonNull Map<Currency, Double> values) {
-        for (Map.Entry<Currency, Double> entry : values.entrySet()) {
+    public void update(@NonNull Map<Currency, Float> values, @Nullable Currency mainCurrency) {
+        this.mainCurrency = mainCurrency;
+        for (Map.Entry<Currency, Float> entry : values.entrySet()) {
             update(entry.getKey(), entry.getValue());
         }
     }
 
-    private void update(@NonNull Currency currency, double value) {
+    private void update(@NonNull Currency currency, float value) {
         CurrencyValue currencyValue = map.get(currency);
-        String formatedValue = formater.formatCurrency(value);
+        String formatedValue = formater.formatToCurrencyValue(value);
         if (currencyValue == null) {
-            currencyValue = createNewCurrencyValue(currency, formater.formatCurrency(value));
+            currencyValue = createNewCurrencyValue(currency, formater.formatToCurrencyValue(value));
             map.put(currency, currencyValue);
         } else {
             currencyValue.setValue(formatedValue);
@@ -39,7 +57,11 @@ public class CurrencyAdapterState {
 
     @NonNull
     public List<CurrencyValue> getValues() {
-        return new ArrayList<>(map.values());
+        List<CurrencyValue> result = new ArrayList<>(map.values());
+        if (mainCurrency != null) {
+            Collections.sort(result, comparator);
+        }
+        return result;
     }
 
     @NonNull

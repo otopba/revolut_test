@@ -1,7 +1,6 @@
 package com.otopba.revolut.ui.currency;
 
-import android.text.Editable;
-import android.text.TextWatcher;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,6 +14,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.otopba.revolut.Currency;
 import com.otopba.revolut.R;
+import com.otopba.revolut.ui.SimpleTextWatcher;
+import com.otopba.revolut.utils.KeyboardUtils;
 
 import java.util.List;
 
@@ -25,14 +26,14 @@ public class CurrencyAdapter extends RecyclerView.Adapter<CurrencyAdapter.Curren
     private Currency selectedCurrency;
     private Listener listener;
 
-    public CurrencyAdapter(@NonNull LayoutInflater layoutInflater, @NonNull List<CurrencyValue> values,
-                           @NonNull Listener listener) {
+    CurrencyAdapter(@NonNull LayoutInflater layoutInflater, @NonNull List<CurrencyValue> values,
+                    @NonNull Listener listener) {
         this.layoutInflater = layoutInflater;
         this.values = values;
         this.listener = listener;
     }
 
-    public void updateCurrencies(@NonNull List<CurrencyValue> currencies, @Nullable Currency selectedCurrency) {
+    void updateCurrencies(@NonNull List<CurrencyValue> currencies, @Nullable Currency selectedCurrency) {
         this.values = currencies;
         this.selectedCurrency = selectedCurrency;
     }
@@ -65,36 +66,40 @@ public class CurrencyAdapter extends RecyclerView.Adapter<CurrencyAdapter.Curren
         private TextView subtitleView;
         private EditText valueView;
 
-        private Currency currency;
+        private CurrencyValue currencyValue;
 
-        public CurrencyHolder(@NonNull View itemView) {
+        CurrencyHolder(@NonNull View itemView) {
             super(itemView);
             iconView = itemView.findViewById(R.id.currency__icon);
             titleView = itemView.findViewById(R.id.currency__title);
             subtitleView = itemView.findViewById(R.id.currency__subtitle);
             valueView = itemView.findViewById(R.id.currency__value);
             itemView.setOnClickListener(v -> handleClick());
-            valueView.addTextChangedListener(new TextWatcher() {
-                @Override
-                public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
-                }
-
+            valueView.setOnFocusChangeListener((v, hasFocus) -> onFicusChange(hasFocus));
+            valueView.addTextChangedListener(new SimpleTextWatcher() {
                 @Override
                 public void onTextChanged(CharSequence s, int start, int before, int count) {
-                    handleTextChange(s);
-                }
-
-                @Override
-                public void afterTextChanged(Editable s) {
-
+                    CurrencyHolder.this.onTextChanged(s);
                 }
             });
         }
 
+        private void onFicusChange(boolean hasFocus) {
+            if (hasFocus) {
+                handleClick();
+            }
+        }
+
+        private void onTextChanged(CharSequence text) {
+            if (TextUtils.equals(currencyValue.getValue(), text)) {
+                return;
+            }
+            handleTextChange(text);
+        }
+
         private void handleClick() {
-            if (currency != null) {
-                listener.onCurrencyClick(currency);
+            if (currencyValue != null) {
+                listener.onCurrencyClick(currencyValue.getModel().currency);
             }
         }
 
@@ -102,16 +107,18 @@ public class CurrencyAdapter extends RecyclerView.Adapter<CurrencyAdapter.Curren
             listener.onCurrencyValueChanged(text);
         }
 
-        public void bind(@NonNull CurrencyValue value) {
+        void bind(@NonNull CurrencyValue value) {
+            this.currencyValue = value;
             CurrencyModel model = value.getModel();
-            this.currency = value.getModel().currency;
             iconView.setImageResource(model.icon);
             titleView.setText(model.title);
             subtitleView.setText(model.subtitle);
-            valueView.setText(value.getValue());
-            if (selectedCurrency != null && currency == selectedCurrency) {
+            if (selectedCurrency != null && currencyValue.getModel().currency == selectedCurrency) {
                 valueView.requestFocus();
-                valueView.setSelection(valueView.length());//TODO: делать 1 раз
+                valueView.setSelection(valueView.length());
+                KeyboardUtils.showKeyboard(valueView);
+            } else {
+                valueView.setText(value.getValue());
             }
         }
     }

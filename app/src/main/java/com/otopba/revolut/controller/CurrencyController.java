@@ -11,13 +11,13 @@ public interface CurrencyController {
 
     void setMainCurrency(@NonNull Currency currency);
 
-    void setMainCurrencyValue(double value);
+    void setMainCurrencyValue(float value);
 
     void registerListener(@NonNull Listener listener);
 
     void unregisterListener(@NonNull Listener listener);
 
     interface Listener {
-        void onUpdate(@NonNull Map<Currency, Double> values, @Nullable Currency mainCurrency);
+        void onUpdate(@NonNull Map<Currency, Float> values, @Nullable Currency mainCurrency);
     }
 }
