@@ -157,11 +157,11 @@ public class CurrencyFragment extends Fragment implements Colored, MenuItem.OnMe
         currencyAdapter = new CurrencyAdapter(inflater, appTheme, Collections.emptyList());
         currencyAdapter.setHasStableIds(true);
         Disposable clickDisposable = currencyAdapter.getClickSubject()
-                .subscribeOn(Schedulers.computation())
+                .observeOn(AndroidSchedulers.mainThread())
                 .distinctUntilChanged()
                 .subscribe(this::onCurrencyClick, this::onError);
         Disposable valueDisposable = currencyAdapter.getValueSubject()
-                .subscribeOn(Schedulers.computation())
+                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(this::onCurrencyValueChanged, this::onError);
         disposables.addAll(clickDisposable, valueDisposable);
         currenciesView.setAdapter(currencyAdapter);
@@ -188,7 +188,7 @@ public class CurrencyFragment extends Fragment implements Colored, MenuItem.OnMe
 
     private void onCurrencyClick(@NonNull Currency currency) {
         currencyController.setMainCurrency(currency);
-        currenciesView.scrollToPosition(0);
+        currenciesView.post(() -> currenciesView.scrollToPosition(0));
     }
 
     private void onCurrencyValueChanged(@Nullable CharSequence text) {

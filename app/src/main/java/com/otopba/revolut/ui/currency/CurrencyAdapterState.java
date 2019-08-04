@@ -25,7 +25,7 @@ public class CurrencyAdapterState {
         this.formater = formater;
         comparator = (currencyValue1, currencyValue2) -> {
             if (mainCurrency == null) {
-                return 0;
+                return Integer.compare(currencyValue1.model.currency.ordinal(), currencyValue2.model.currency.ordinal());
             }
             if (currencyValue1.model.currency == mainCurrency) {
                 return -1;
@@ -33,7 +33,7 @@ public class CurrencyAdapterState {
             if (currencyValue2.model.currency == mainCurrency) {
                 return 1;
             }
-            return 0;
+            return Integer.compare(currencyValue1.model.currency.ordinal(), currencyValue2.model.currency.ordinal());
         };
     }
 
