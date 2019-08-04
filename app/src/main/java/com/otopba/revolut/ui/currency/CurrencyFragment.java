@@ -1,17 +1,24 @@
 package com.otopba.revolut.ui.currency;
 
 import android.app.Activity;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -26,6 +33,9 @@ import com.otopba.revolut.controller.CurrencyController;
 import com.otopba.revolut.controller.error.CurrencyError;
 import com.otopba.revolut.controller.error.NoConnectionError;
 import com.otopba.revolut.storage.Currency;
+import com.otopba.revolut.ui.theme.AppTheme;
+import com.otopba.revolut.ui.theme.Colored;
+import com.otopba.revolut.ui.theme.Colors;
 import com.otopba.revolut.utils.Formatter;
 import com.otopba.revolut.utils.Snackbars;
 
@@ -39,20 +49,27 @@ import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 
-public class CurrencyFragment extends Fragment {
+public class CurrencyFragment extends Fragment implements Colored, MenuItem.OnMenuItemClickListener {
 
     public static final String TAG = CurrencyFragment.class.getName();
+    private static final int NIGHT_MODE_MENU_ITEM = 1;
     private final CompositeDisposable disposables = new CompositeDisposable();
 
     @Inject
     Formatter formatter;
     @Inject
     CurrencyController currencyController;
+    @Inject
+    AppTheme appTheme;
 
-    private CurrencyAdapterState currencyAdapterState;
+    private View rootView;
+    private Toolbar toolbar;
     private RecyclerView currenciesView;
-    private CurrencyAdapter currencyAdapter;
     private LottieAnimationView loadingView;
+    private Drawable moonDrawable;
+
+    private CurrencyAdapter currencyAdapter;
+    private CurrencyAdapterState currencyAdapterState;
     private Snackbars snackbars;
 
     public static CurrencyFragment newInstance() {
@@ -74,12 +91,17 @@ public class CurrencyFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_currency, container, false);
-        currenciesView = view.findViewById(R.id.fragment_currency__currencies);
-        loadingView = view.findViewById(R.id.fragment_currency__loading);
+        rootView = inflater.inflate(R.layout.fragment_currency, container, false);
+        toolbar = rootView.findViewById(R.id.fragment_currency__toolbar);
+        currenciesView = rootView.findViewById(R.id.fragment_currency__currencies);
+        loadingView = rootView.findViewById(R.id.fragment_currency__loading);
         snackbars = new Snackbars(currenciesView);
+        moonDrawable = ResourcesCompat.getDrawable(getResources(), R.drawable.ic_moon, null);
+        setHasOptionsMenu(true);
+        setupToolbar();
         setupRecyclerView(inflater);
-        return view;
+        applyColors(appTheme.getColors());
+        return rootView;
     }
 
     @Override
@@ -125,7 +147,7 @@ public class CurrencyFragment extends Fragment {
     }
 
     private void setupRecyclerView(@NonNull LayoutInflater inflater) {
-        currencyAdapter = new CurrencyAdapter(inflater, Collections.emptyList());
+        currencyAdapter = new CurrencyAdapter(inflater, appTheme, Collections.emptyList());
         currencyAdapter.setHasStableIds(true);
         Disposable clickDisposable = currencyAdapter.getClickSubject()
                 .subscribeOn(Schedulers.computation())
@@ -160,24 +182,28 @@ public class CurrencyFragment extends Fragment {
 
     private void setLastUpdateTime(@Nullable String lastUpdateTime) {
         if (TextUtils.isEmpty(lastUpdateTime)) {
-            setTitle(null);
+            toolbar.setTitle(R.string.app_name);
         } else {
-            setTitle(getString(R.string.last_update, lastUpdateTime));
+            toolbar.setTitle(getString(R.string.last_update, lastUpdateTime));
         }
     }
 
-    private void setTitle(@Nullable String title) {
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        menu.add(Menu.NONE, NIGHT_MODE_MENU_ITEM, Menu.NONE, "")
+                .setIcon(moonDrawable)
+                .setShowAsActionFlags(MenuItem.SHOW_AS_ACTION_ALWAYS)
+                .setOnMenuItemClickListener(this);
+        super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    private void setupToolbar() {
         Activity activity = getActivity();
-        if (activity == null) {
-            Log.e(TAG, "Can't get activity");
+        if (!(activity instanceof AppCompatActivity)) {
             return;
         }
-        ActionBar actionBar = ((AppCompatActivity) activity).getSupportActionBar();
-        if (actionBar == null) {
-            Log.e(TAG, "ActionBar is null");
-            return;
-        }
-        actionBar.setTitle(title);
+        AppCompatActivity appCompatActivity = (AppCompatActivity) activity;
+        appCompatActivity.setSupportActionBar(toolbar);
     }
 
     private void onUpdate(@NonNull ControllerUpdate controllerUpdate) {
@@ -216,4 +242,24 @@ public class CurrencyFragment extends Fragment {
         Log.e(TAG, "App error", throwable);
     }
 
+    @Override
+    public void applyColors(@NonNull Colors colors) {
+        rootView.setBackgroundColor(colors.mainBackgroundColor);
+        currenciesView.setBackgroundColor(Color.TRANSPARENT);
+        if (currencyAdapter != null) {
+            currencyAdapter.notifyDataSetChanged();
+        }
+        toolbar.setBackgroundColor(colors.mainBackgroundColor);
+        toolbar.setTitleTextColor(colors.titleTextColor);
+        moonDrawable.setColorFilter(colors.moonColor, PorterDuff.Mode.SRC_IN);
+    }
+
+    @Override
+    public boolean onMenuItemClick(MenuItem item) {
+        if (item.getItemId() == NIGHT_MODE_MENU_ITEM) {
+            appTheme.invertTheme();
+            applyColors(appTheme.getColors());
+        }
+        return false;
+    }
 }

@@ -12,10 +12,14 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.otopba.revolut.storage.Currency;
 import com.otopba.revolut.R;
+import com.otopba.revolut.storage.Currency;
 import com.otopba.revolut.ui.SimpleTextWatcher;
+import com.otopba.revolut.ui.theme.AppTheme;
+import com.otopba.revolut.ui.theme.Colored;
+import com.otopba.revolut.ui.theme.Colors;
 import com.otopba.revolut.utils.KeyboardUtils;
+import com.otopba.revolut.utils.ThemeUtils;
 
 import java.util.List;
 
@@ -25,13 +29,15 @@ import io.reactivex.subjects.Subject;
 public class CurrencyAdapter extends RecyclerView.Adapter<CurrencyAdapter.CurrencyHolder> {
 
     private final LayoutInflater layoutInflater;
+    private final AppTheme appTheme;
     private final Subject<Currency> clickSubject = PublishSubject.create();
     private final Subject<CharSequence> valueSubject = PublishSubject.create();
     private List<CurrencyValue> values;
     private Currency selectedCurrency;
 
-    CurrencyAdapter(@NonNull LayoutInflater layoutInflater, @NonNull List<CurrencyValue> values) {
+    CurrencyAdapter(@NonNull LayoutInflater layoutInflater, @NonNull AppTheme appTheme, @NonNull List<CurrencyValue> values) {
         this.layoutInflater = layoutInflater;
+        this.appTheme = appTheme;
         this.values = values;
     }
 
@@ -69,17 +75,19 @@ public class CurrencyAdapter extends RecyclerView.Adapter<CurrencyAdapter.Curren
         return valueSubject;
     }
 
-    class CurrencyHolder extends RecyclerView.ViewHolder {
+    class CurrencyHolder extends RecyclerView.ViewHolder implements Colored {
 
+        private View rootView;
         private ImageView iconView;
         private TextView titleView;
         private TextView subtitleView;
         private EditText valueView;
-
         private CurrencyValue currencyValue;
+        private boolean isDayTheme;
 
         CurrencyHolder(@NonNull View itemView) {
             super(itemView);
+            rootView = itemView;
             iconView = itemView.findViewById(R.id.currency__icon);
             titleView = itemView.findViewById(R.id.currency__title);
             subtitleView = itemView.findViewById(R.id.currency__subtitle);
@@ -92,6 +100,8 @@ public class CurrencyAdapter extends RecyclerView.Adapter<CurrencyAdapter.Curren
                     CurrencyHolder.this.onTextChanged(s);
                 }
             });
+            applyColors(appTheme.getColors());
+            isDayTheme = appTheme.isDay();
         }
 
         private void onFicusChange(boolean hasFocus) {
@@ -136,6 +146,19 @@ public class CurrencyAdapter extends RecyclerView.Adapter<CurrencyAdapter.Curren
             } else {
                 valueView.setText(value.value);
             }
+            if (isDayTheme != appTheme.isDay()) {
+                applyColors(appTheme.getColors());
+                isDayTheme = appTheme.isDay();
+            }
+        }
+
+        @Override
+        public void applyColors(@NonNull Colors colors) {
+            rootView.setBackground(ThemeUtils.recyclerItemBackground(colors.rippleColor));
+            titleView.setTextColor(colors.titleTextColor);
+            subtitleView.setTextColor(colors.subtitleTextColor);
+            valueView.setTextColor(colors.titleTextColor);
+            valueView.setHintTextColor(colors.hintTextColor);
         }
     }
 

@@ -12,6 +12,8 @@ import com.otopba.revolut.provider.CurrencyProvider;
 import com.otopba.revolut.provider.RevolutCurrencyProvider;
 import com.otopba.revolut.storage.CurrencyStorage;
 import com.otopba.revolut.storage.InMemoryCurrencyStorage;
+import com.otopba.revolut.ui.theme.AppTheme;
+import com.otopba.revolut.ui.theme.RevolutAppTheme;
 import com.otopba.revolut.utils.Formatter;
 import com.otopba.revolut.utils.RevolutFormatter;
 
@@ -63,6 +65,12 @@ public class AppModule {
     @Singleton
     ConnectionManager provideConnectionManager(Context context) {
         return new ConnectionManagerImpl(context);
+    }
+
+    @Provides
+    @Singleton
+    AppTheme provideAppTheme() {
+        return new RevolutAppTheme(true);
     }
 
 }
