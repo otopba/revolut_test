@@ -27,10 +27,10 @@ public class CurrencyAdapterState {
             if (mainCurrency == null) {
                 return 0;
             }
-            if (currencyValue1.getModel().currency == mainCurrency) {
+            if (currencyValue1.model.currency == mainCurrency) {
                 return -1;
             }
-            if (currencyValue2.getModel().currency == mainCurrency) {
+            if (currencyValue2.model.currency == mainCurrency) {
                 return 1;
             }
             return 0;
@@ -46,13 +46,13 @@ public class CurrencyAdapterState {
 
     private void update(@NonNull Currency currency, float value) {
         CurrencyValue currencyValue = map.get(currency);
-        String formatedValue = formater.formatToCurrencyValue(value);
+        String formattedValue = formater.formatToCurrencyValue(value);
         if (currencyValue == null) {
-            currencyValue = createNewCurrencyValue(currency, formater.formatToCurrencyValue(value));
-            map.put(currency, currencyValue);
+            currencyValue = createNewCurrencyValue(currency, formattedValue);
         } else {
-            currencyValue.setValue(formatedValue);
+            currencyValue = new CurrencyValue(currencyValue.model, formattedValue);
         }
+        map.put(currency, currencyValue);
     }
 
     @NonNull
@@ -62,6 +62,11 @@ public class CurrencyAdapterState {
             Collections.sort(result, comparator);
         }
         return result;
+    }
+
+    @Nullable
+    public Currency getMainCurrency() {
+        return mainCurrency;
     }
 
     public boolean isEmpty() {

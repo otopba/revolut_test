@@ -13,8 +13,10 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.SimpleItemAnimator;
 
 import com.airbnb.lottie.LottieAnimationView;
 import com.otopba.revolut.App;
@@ -28,6 +30,7 @@ import com.otopba.revolut.utils.Formatter;
 import com.otopba.revolut.utils.Snackbars;
 
 import java.util.Collections;
+import java.util.List;
 
 import javax.inject.Inject;
 
@@ -121,11 +124,16 @@ public class CurrencyFragment extends Fragment implements CurrencyAdapter.Listen
         currencyAdapter.setHasStableIds(true);
         currenciesView.setAdapter(currencyAdapter);
         currenciesView.setLayoutManager(new LinearLayoutManager(getContext()));
+        RecyclerView.ItemAnimator itemAnimator = currenciesView.getItemAnimator();
+        if (itemAnimator instanceof SimpleItemAnimator) {
+            ((SimpleItemAnimator) itemAnimator).setSupportsChangeAnimations(false);
+        }
     }
 
     @Override
     public void onCurrencyClick(@NonNull Currency currency) {
         currencyController.setMainCurrency(currency);
+        currenciesView.scrollToPosition(0);
     }
 
     @Override
@@ -163,9 +171,17 @@ public class CurrencyFragment extends Fragment implements CurrencyAdapter.Listen
 
     private void onUpdate(@NonNull ControllerUpdate controllerUpdate) {
         Log.d(TAG, String.format("Controller update %s", controllerUpdate));
+        List<CurrencyValue> oldValue = currencyAdapterState.getValues();
+        Currency oldMainCurrency = currencyAdapterState.getMainCurrency();
+
         currencyAdapterState.update(controllerUpdate.values, controllerUpdate.mainCurrency);
+        List<CurrencyValue> newValues = currencyAdapterState.getValues();
+        Currency newMainCurrency = currencyAdapterState.getMainCurrency();
+
+        CurrencyDiffUtilCallback callback = new CurrencyDiffUtilCallback(oldValue, newValues, oldMainCurrency, newMainCurrency);
+        DiffUtil.DiffResult productDiffResult = DiffUtil.calculateDiff(callback);
         currencyAdapter.updateCurrencies(currencyAdapterState.getValues(), controllerUpdate.mainCurrency);
-        currencyAdapter.notifyDataSetChanged();
+        productDiffResult.dispatchUpdatesTo(currencyAdapter);
         setLastUpdateTime(formatter.formatDate(controllerUpdate.date));
         setupVisibility();
     }

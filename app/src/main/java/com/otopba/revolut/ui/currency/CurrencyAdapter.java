@@ -51,7 +51,7 @@ public class CurrencyAdapter extends RecyclerView.Adapter<CurrencyAdapter.Curren
 
     @Override
     public long getItemId(int position) {
-        return values.get(position).getModel().currency.ordinal();
+        return values.get(position).model.currency.ordinal();
     }
 
     @Override
@@ -91,7 +91,7 @@ public class CurrencyAdapter extends RecyclerView.Adapter<CurrencyAdapter.Curren
         }
 
         private void onTextChanged(CharSequence text) {
-            if (TextUtils.equals(currencyValue.getValue(), text)) {
+            if (TextUtils.equals(currencyValue.value, text)) {
                 return;
             }
             handleTextChange(text);
@@ -99,7 +99,7 @@ public class CurrencyAdapter extends RecyclerView.Adapter<CurrencyAdapter.Curren
 
         private void handleClick() {
             if (currencyValue != null) {
-                listener.onCurrencyClick(currencyValue.getModel().currency);
+                listener.onCurrencyClick(currencyValue.model.currency);
             }
         }
 
@@ -108,17 +108,20 @@ public class CurrencyAdapter extends RecyclerView.Adapter<CurrencyAdapter.Curren
         }
 
         void bind(@NonNull CurrencyValue value) {
+            if(currencyValue == null || currencyValue.model.currency != value.model.currency) {
+                iconView.setImageResource(value.model.icon);
+                titleView.setText(value.model.title);
+                subtitleView.setText(value.model.subtitle);
+            }
             this.currencyValue = value;
-            CurrencyModel model = value.getModel();
-            iconView.setImageResource(model.icon);
-            titleView.setText(model.title);
-            subtitleView.setText(model.subtitle);
-            if (selectedCurrency != null && currencyValue.getModel().currency == selectedCurrency) {
-                valueView.requestFocus();
-                valueView.setSelection(valueView.length());
-                KeyboardUtils.showKeyboard(valueView);
+            if (selectedCurrency != null && currencyValue.model.currency == selectedCurrency) {
+                if (!valueView.hasFocus()) {
+                    valueView.requestFocus();
+                    valueView.setSelection(valueView.length());
+                    KeyboardUtils.showKeyboard(valueView);
+                }
             } else {
-                valueView.setText(value.getValue());
+                valueView.setText(value.value);
             }
         }
     }
