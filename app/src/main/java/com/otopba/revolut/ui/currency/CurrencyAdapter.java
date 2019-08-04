@@ -100,7 +100,7 @@ public class CurrencyAdapter extends RecyclerView.Adapter<CurrencyAdapter.Curren
                     CurrencyHolder.this.onTextChanged(s);
                 }
             });
-            applyColors(appTheme.getColors());
+            applyColors(appTheme.getColors(), appTheme.isDay());
             isDayTheme = appTheme.isDay();
         }
 
@@ -141,19 +141,23 @@ public class CurrencyAdapter extends RecyclerView.Adapter<CurrencyAdapter.Curren
                 if (!valueView.hasFocus()) {
                     valueView.requestFocus();
                     valueView.setSelection(valueView.length());
-                    KeyboardUtils.showKeyboard(valueView);
+                    valueView.post(() -> KeyboardUtils.showKeyboard(valueView));
+                }
+                if (valueView.length() == 0 && !TextUtils.isEmpty(value.value)) {
+                    valueView.setText(value.value);
+                    valueView.setSelection(valueView.length());
                 }
             } else {
                 valueView.setText(value.value);
             }
             if (isDayTheme != appTheme.isDay()) {
-                applyColors(appTheme.getColors());
+                applyColors(appTheme.getColors(), appTheme.isDay());
                 isDayTheme = appTheme.isDay();
             }
         }
 
         @Override
-        public void applyColors(@NonNull Colors colors) {
+        public void applyColors(@NonNull Colors colors, boolean isDay) {
             rootView.setBackground(ThemeUtils.recyclerItemBackground(colors.rippleColor));
             titleView.setTextColor(colors.titleTextColor);
             subtitleView.setTextColor(colors.subtitleTextColor);

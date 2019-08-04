@@ -60,6 +60,7 @@
         android:layout_height="wrap_content"
         android:layout_marginEnd="@dimen/horizontal_space"
         android:hint="@string/currency_hint"
+        android:imeOptions="actionDone|flagNoExtractUi"
         android:inputType="numberDecimal|numberSigned"
         android:maxLength="15"
         android:maxLines="1"

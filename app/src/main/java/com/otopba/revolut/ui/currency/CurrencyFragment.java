@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -13,6 +14,8 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -32,6 +35,7 @@ import com.otopba.revolut.controller.ControllerUpdate;
 import com.otopba.revolut.controller.CurrencyController;
 import com.otopba.revolut.controller.error.CurrencyError;
 import com.otopba.revolut.controller.error.NoConnectionError;
+import com.otopba.revolut.preferences.Prefs;
 import com.otopba.revolut.storage.Currency;
 import com.otopba.revolut.ui.theme.AppTheme;
 import com.otopba.revolut.ui.theme.Colored;
@@ -61,6 +65,8 @@ public class CurrencyFragment extends Fragment implements Colored, MenuItem.OnMe
     CurrencyController currencyController;
     @Inject
     AppTheme appTheme;
+    @Inject
+    Prefs prefs;
 
     private View rootView;
     private Toolbar toolbar;
@@ -100,7 +106,7 @@ public class CurrencyFragment extends Fragment implements Colored, MenuItem.OnMe
         setHasOptionsMenu(true);
         setupToolbar();
         setupRecyclerView(inflater);
-        applyColors(appTheme.getColors());
+        applyColors(appTheme.getColors(), appTheme.isDay());
         return rootView;
     }
 
@@ -243,7 +249,8 @@ public class CurrencyFragment extends Fragment implements Colored, MenuItem.OnMe
     }
 
     @Override
-    public void applyColors(@NonNull Colors colors) {
+    public void applyColors(@NonNull Colors colors, boolean isDay) {
+        setStatusBarColor(colors.mainBackgroundColor, isDay);
         rootView.setBackgroundColor(colors.mainBackgroundColor);
         currenciesView.setBackgroundColor(Color.TRANSPARENT);
         if (currencyAdapter != null) {
@@ -252,13 +259,36 @@ public class CurrencyFragment extends Fragment implements Colored, MenuItem.OnMe
         toolbar.setBackgroundColor(colors.mainBackgroundColor);
         toolbar.setTitleTextColor(colors.titleTextColor);
         moonDrawable.setColorFilter(colors.moonColor, PorterDuff.Mode.SRC_IN);
+
+    }
+
+    private void setStatusBarColor(int color, boolean isDay) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            return;
+        }
+        Activity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
+        Window window = activity.getWindow();
+        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+        View decorView = window.getDecorView();
+        int systemUiVisibility = decorView.getSystemUiVisibility();
+        if (isDay) {
+            systemUiVisibility |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+        } else {
+            systemUiVisibility &= ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+        }
+        decorView.setSystemUiVisibility(systemUiVisibility);
+        window.setStatusBarColor(color);
     }
 
     @Override
     public boolean onMenuItemClick(MenuItem item) {
         if (item.getItemId() == NIGHT_MODE_MENU_ITEM) {
             appTheme.invertTheme();
-            applyColors(appTheme.getColors());
+            prefs.setDayTheme(appTheme.isDay());
+            applyColors(appTheme.getColors(), appTheme.isDay());
         }
         return false;
     }

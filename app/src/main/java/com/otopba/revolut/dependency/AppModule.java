@@ -8,6 +8,8 @@ import com.otopba.revolut.connection.ConnectionManager;
 import com.otopba.revolut.connection.ConnectionManagerImpl;
 import com.otopba.revolut.controller.CurrencyController;
 import com.otopba.revolut.controller.RevolutCurrencyController;
+import com.otopba.revolut.preferences.Prefs;
+import com.otopba.revolut.preferences.PrefsImpl;
 import com.otopba.revolut.provider.CurrencyProvider;
 import com.otopba.revolut.provider.RevolutCurrencyProvider;
 import com.otopba.revolut.storage.CurrencyStorage;
@@ -69,8 +71,14 @@ public class AppModule {
 
     @Provides
     @Singleton
-    AppTheme provideAppTheme() {
-        return new RevolutAppTheme(true);
+    AppTheme provideAppTheme(Prefs prefs) {
+        return new RevolutAppTheme(prefs.isDayTheme());
+    }
+
+    @Provides
+    @Singleton
+    Prefs providePrefs(Context context) {
+        return new PrefsImpl(context);
     }
 
 }

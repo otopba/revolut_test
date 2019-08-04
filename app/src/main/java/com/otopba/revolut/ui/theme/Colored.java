@@ -4,6 +4,6 @@ import androidx.annotation.NonNull;
 
 public interface Colored {
 
-    void applyColors(@NonNull Colors colors);
+    void applyColors(@NonNull Colors colors, boolean isDay);
 
 }
