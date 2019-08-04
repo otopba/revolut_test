@@ -20,18 +20,21 @@ import com.airbnb.lottie.LottieAnimationView;
 import com.otopba.revolut.App;
 import com.otopba.revolut.Currency;
 import com.otopba.revolut.R;
+import com.otopba.revolut.controller.ControllerUpdate;
 import com.otopba.revolut.controller.CurrencyController;
 import com.otopba.revolut.utils.Formatter;
 import com.otopba.revolut.utils.Toasts;
 
 import java.util.Collections;
-import java.util.Map;
 
 import javax.inject.Inject;
 
 import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
 
-public class CurrencyFragment extends Fragment implements CurrencyAdapter.Listener, CurrencyController.Listener {
+public class CurrencyFragment extends Fragment implements CurrencyAdapter.Listener {
 
     public static final String TAG = CurrencyFragment.class.getName();
 
@@ -44,6 +47,7 @@ public class CurrencyFragment extends Fragment implements CurrencyAdapter.Listen
     private RecyclerView currenciesView;
     private CurrencyAdapter currencyAdapter;
     private LottieAnimationView loadingView;
+    private CompositeDisposable disposables;
 
     public static CurrencyFragment newInstance() {
         return new CurrencyFragment();
@@ -75,7 +79,17 @@ public class CurrencyFragment extends Fragment implements CurrencyAdapter.Listen
     public void onResume() {
         super.onResume();
         setupVisibility();
-        currencyController.registerListener(this);
+        currencyController.start();
+        Disposable errorDisposable = currencyController.getErrorSubject()
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeOn(Schedulers.computation())
+                .subscribe(this::onError, this::onError);
+        Disposable updateDisposable = currencyController.getUpdateSubject()
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeOn(Schedulers.computation())
+                .subscribe(this::onUpdate, this::onError);
+        disposables = new CompositeDisposable();
+        disposables.addAll(errorDisposable, updateDisposable);
     }
 
     private void setupVisibility() {
@@ -91,7 +105,11 @@ public class CurrencyFragment extends Fragment implements CurrencyAdapter.Listen
     @Override
     public void onPause() {
         super.onPause();
-        currencyController.unregisterListener(this);
+        currencyController.stop();
+        if (disposables != null && !disposables.isDisposed()) {
+            disposables.dispose();
+            disposables = null;
+        }
     }
 
     private void setupRecyclerView(@NonNull LayoutInflater inflater) {
@@ -139,20 +157,21 @@ public class CurrencyFragment extends Fragment implements CurrencyAdapter.Listen
         actionBar.setTitle(title);
     }
 
-    @Override
-    public void onUpdate(@NonNull Map<Currency, Float> values, @Nullable Currency mainCurrency, long date) {
-        currencyAdapterState.update(values, mainCurrency);
-        currencyAdapter.updateCurrencies(currencyAdapterState.getValues(), mainCurrency);
-        AndroidSchedulers.mainThread().scheduleDirect(() -> {
-            currencyAdapter.notifyDataSetChanged();
-            setLastUpdateTime(formatter.formatDate(date));
-            setupVisibility();
-        });
+    public void onUpdate(@NonNull ControllerUpdate controllerUpdate) {
+        Log.d(TAG, String.format("Controller update %s", controllerUpdate));
+        currencyAdapterState.update(controllerUpdate.values, controllerUpdate.mainCurrency);
+        currencyAdapter.updateCurrencies(currencyAdapterState.getValues(), controllerUpdate.mainCurrency);
+        currencyAdapter.notifyDataSetChanged();
+        setLastUpdateTime(formatter.formatDate(controllerUpdate.date));
+        setupVisibility();
     }
 
-    @Override
-    public void onError() {
+    public void onError(Throwable throwable) {
         Log.e(TAG, "Can't update currencies");
-        AndroidSchedulers.mainThread().scheduleDirect(() -> Toasts.showShort(getContext(), R.string.api_error));
+        if (getContext() == null) {
+            return;
+        }
+        Toasts.showShort(getContext(), R.string.api_error);
     }
+
 }

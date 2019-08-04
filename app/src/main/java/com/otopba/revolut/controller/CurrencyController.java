@@ -1,11 +1,10 @@
 package com.otopba.revolut.controller;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 import com.otopba.revolut.Currency;
 
-import java.util.Map;
+import io.reactivex.subjects.Subject;
 
 public interface CurrencyController {
 
@@ -13,13 +12,14 @@ public interface CurrencyController {
 
     void setMainCurrencyValue(float value);
 
-    void registerListener(@NonNull Listener listener);
+    void start();
 
-    void unregisterListener(@NonNull Listener listener);
+    void stop();
 
-    interface Listener {
-        void onUpdate(@NonNull Map<Currency, Float> values, @Nullable Currency mainCurrency, long date);
+    @NonNull
+    Subject<ControllerUpdate> getUpdateSubject();
 
-        void onError();
-    }
+    @NonNull
+    Subject<Throwable> getErrorSubject();
+
 }
