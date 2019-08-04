@@ -6,8 +6,8 @@ import com.otopba.revolut.provider.CurrencyProvider;
 import com.otopba.revolut.provider.RevolutCurrencyProvider;
 import com.otopba.revolut.storage.CurrencyStorage;
 import com.otopba.revolut.storage.InMemoryCurrencyStorage;
-import com.otopba.revolut.utils.Formater;
-import com.otopba.revolut.utils.RevolutFormater;
+import com.otopba.revolut.utils.Formatter;
+import com.otopba.revolut.utils.RevolutFormatter;
 
 import javax.inject.Singleton;
 
@@ -37,8 +37,8 @@ public class AppModule {
 
     @Provides
     @Singleton
-    Formater provideFormater() {
-        return new RevolutFormater();
+    Formatter provideFormater() {
+        return new RevolutFormatter();
     }
 
 }

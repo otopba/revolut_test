@@ -4,7 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.otopba.revolut.Currency;
-import com.otopba.revolut.utils.Formater;
+import com.otopba.revolut.utils.Formatter;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -16,12 +16,12 @@ import java.util.Map;
 public class CurrencyAdapterState {
 
     private final Map<Currency, CurrencyValue> map = new HashMap<>();
-    private final Formater formater;
+    private final Formatter formater;
     private final Comparator<CurrencyValue> comparator;
 
     private Currency mainCurrency;
 
-    public CurrencyAdapterState(@NonNull Formater formater) {
+    public CurrencyAdapterState(@NonNull Formatter formater) {
         this.formater = formater;
         comparator = (currencyValue1, currencyValue2) -> {
             if (mainCurrency == null) {

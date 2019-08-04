@@ -11,16 +11,22 @@ import com.otopba.revolut.api.CurrencyUpdate;
 import com.otopba.revolut.provider.CurrencyProvider;
 import com.otopba.revolut.storage.CurrencyStorage;
 
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
+import io.reactivex.Observable;
+import io.reactivex.ObservableSource;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
 
 public class RevolutCurrencyController implements CurrencyController {
 
+    private static final long INTERVAL_SEC = 1;
     private final Set<Listener> listeners = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private final CurrencyStorage storage;
     private final CurrencyProvider provider;
@@ -40,15 +46,16 @@ public class RevolutCurrencyController implements CurrencyController {
                 disposable = null;
             }
         } else if (disposable == null || disposable.isDisposed()) {
-            disposable = provider.getCurrency()
+            disposable = Observable.interval(0, INTERVAL_SEC, TimeUnit.SECONDS)
                     .observeOn(Schedulers.io())
                     .subscribeOn(Schedulers.io())
+                    .flatMap((Function<Long, ObservableSource<CurrencyUpdate>>) aLong -> provider.getCurrency().toObservable())
                     .subscribe(this::updateCurrency);//TODO: обработать ошибки
         }
     }
 
     private void updateCurrency(@NonNull CurrencyUpdate currencyUpdate) {
-        storage.saveRates(currencyUpdate.rates, currencyUpdate.date);
+        storage.saveRates(currencyUpdate.rates, Calendar.getInstance().getTime().getTime());
         sync();
     }
 
@@ -101,7 +108,7 @@ public class RevolutCurrencyController implements CurrencyController {
         notifyUpdate(values, storage.getDate());
     }
 
-    public void notifyUpdate(@NonNull Map<Currency, Float> values, @Nullable String date) {
+    public void notifyUpdate(@NonNull Map<Currency, Float> values, long date) {
         notifyListeners(listener -> listener.onUpdate(values, mainCurrency, date));
     }
 

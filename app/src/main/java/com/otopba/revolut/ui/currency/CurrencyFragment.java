@@ -20,7 +20,7 @@ import com.otopba.revolut.App;
 import com.otopba.revolut.Currency;
 import com.otopba.revolut.R;
 import com.otopba.revolut.controller.CurrencyController;
-import com.otopba.revolut.utils.Formater;
+import com.otopba.revolut.utils.Formatter;
 
 import java.util.Collections;
 import java.util.Map;
@@ -34,7 +34,7 @@ public class CurrencyFragment extends Fragment implements CurrencyAdapter.Listen
     public static final String TAG = CurrencyFragment.class.getName();
 
     @Inject
-    Formater formater;
+    Formatter formater;
     @Inject
     CurrencyController currencyController;
 
@@ -125,13 +125,12 @@ public class CurrencyFragment extends Fragment implements CurrencyAdapter.Listen
     }
 
     @Override
-    public void onUpdate(@NonNull Map<Currency, Float> values, @Nullable Currency mainCurrency,
-                         @Nullable String date) {
+    public void onUpdate(@NonNull Map<Currency, Float> values, @Nullable Currency mainCurrency, long date) {
         currencyAdapterState.update(values, mainCurrency);
         currencyAdapter.updateCurrencies(currencyAdapterState.getValues(), mainCurrency);
         AndroidSchedulers.mainThread().scheduleDirect(() -> {
             currencyAdapter.notifyDataSetChanged();
-            setLastUpdateTime(date);
+            setLastUpdateTime(formater.formatDate(date));
         });
     }
 }
