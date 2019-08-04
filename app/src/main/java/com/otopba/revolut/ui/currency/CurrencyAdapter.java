@@ -19,18 +19,20 @@ import com.otopba.revolut.utils.KeyboardUtils;
 
 import java.util.List;
 
+import io.reactivex.subjects.PublishSubject;
+import io.reactivex.subjects.Subject;
+
 public class CurrencyAdapter extends RecyclerView.Adapter<CurrencyAdapter.CurrencyHolder> {
 
     private final LayoutInflater layoutInflater;
+    private final Subject<Currency> clickSubject = PublishSubject.create();
+    private final Subject<CharSequence> valueSubject = PublishSubject.create();
     private List<CurrencyValue> values;
     private Currency selectedCurrency;
-    private Listener listener;
 
-    CurrencyAdapter(@NonNull LayoutInflater layoutInflater, @NonNull List<CurrencyValue> values,
-                    @NonNull Listener listener) {
+    CurrencyAdapter(@NonNull LayoutInflater layoutInflater, @NonNull List<CurrencyValue> values) {
         this.layoutInflater = layoutInflater;
         this.values = values;
-        this.listener = listener;
     }
 
     void updateCurrencies(@NonNull List<CurrencyValue> currencies, @Nullable Currency selectedCurrency) {
@@ -57,6 +59,14 @@ public class CurrencyAdapter extends RecyclerView.Adapter<CurrencyAdapter.Curren
     @Override
     public int getItemCount() {
         return values.size();
+    }
+
+    public Subject<Currency> getClickSubject() {
+        return clickSubject;
+    }
+
+    public Subject<CharSequence> getValueSubject() {
+        return valueSubject;
     }
 
     class CurrencyHolder extends RecyclerView.ViewHolder {
@@ -99,16 +109,19 @@ public class CurrencyAdapter extends RecyclerView.Adapter<CurrencyAdapter.Curren
 
         private void handleClick() {
             if (currencyValue != null) {
-                listener.onCurrencyClick(currencyValue.model.currency);
+                clickSubject.onNext(currencyValue.model.currency);
             }
         }
 
         private void handleTextChange(@Nullable CharSequence text) {
-            listener.onCurrencyValueChanged(text);
+            if (text == null) {
+                text = "";
+            }
+            valueSubject.onNext(text);
         }
 
         void bind(@NonNull CurrencyValue value) {
-            if(currencyValue == null || currencyValue.model.currency != value.model.currency) {
+            if (currencyValue == null || currencyValue.model.currency != value.model.currency) {
                 iconView.setImageResource(value.model.icon);
                 titleView.setText(value.model.title);
                 subtitleView.setText(value.model.subtitle);
@@ -124,14 +137,6 @@ public class CurrencyAdapter extends RecyclerView.Adapter<CurrencyAdapter.Curren
                 valueView.setText(value.value);
             }
         }
-    }
-
-    public interface Listener {
-
-        void onCurrencyClick(@NonNull Currency currency);
-
-        void onCurrencyValueChanged(@Nullable CharSequence text);
-
     }
 
 }

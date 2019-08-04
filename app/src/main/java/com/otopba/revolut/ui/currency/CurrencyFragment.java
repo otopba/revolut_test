@@ -39,9 +39,10 @@ import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 
-public class CurrencyFragment extends Fragment implements CurrencyAdapter.Listener {
+public class CurrencyFragment extends Fragment {
 
     public static final String TAG = CurrencyFragment.class.getName();
+    private final CompositeDisposable disposables = new CompositeDisposable();
 
     @Inject
     Formatter formatter;
@@ -52,7 +53,6 @@ public class CurrencyFragment extends Fragment implements CurrencyAdapter.Listen
     private RecyclerView currenciesView;
     private CurrencyAdapter currencyAdapter;
     private LottieAnimationView loadingView;
-    private CompositeDisposable disposables;
     private Snackbars snackbars;
 
     public static CurrencyFragment newInstance() {
@@ -95,7 +95,6 @@ public class CurrencyFragment extends Fragment implements CurrencyAdapter.Listen
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribeOn(Schedulers.computation())
                 .subscribe(this::onUpdate, this::onError);
-        disposables = new CompositeDisposable();
         disposables.addAll(errorDisposable, updateDisposable);
     }
 
@@ -103,8 +102,10 @@ public class CurrencyFragment extends Fragment implements CurrencyAdapter.Listen
         if (currencyAdapterState.isEmpty()) {
             loadingView.setVisibility(View.VISIBLE);
             currenciesView.setVisibility(View.GONE);
+            loadingView.animate();
         } else {
             loadingView.setVisibility(View.GONE);
+            loadingView.cancelAnimation();
             currenciesView.setVisibility(View.VISIBLE);
         }
     }
@@ -112,16 +113,28 @@ public class CurrencyFragment extends Fragment implements CurrencyAdapter.Listen
     @Override
     public void onPause() {
         super.onPause();
-        currencyController.stop();
-        if (disposables != null && !disposables.isDisposed()) {
+        if (currencyController != null) {
+            currencyController.stop();
+        }
+        if (!disposables.isDisposed()) {
             disposables.dispose();
-            disposables = null;
+        }
+        if (loadingView != null) {
+            loadingView.cancelAnimation();
         }
     }
 
     private void setupRecyclerView(@NonNull LayoutInflater inflater) {
-        currencyAdapter = new CurrencyAdapter(inflater, Collections.emptyList(), this);
+        currencyAdapter = new CurrencyAdapter(inflater, Collections.emptyList());
         currencyAdapter.setHasStableIds(true);
+        Disposable clickDisposable = currencyAdapter.getClickSubject()
+                .subscribeOn(Schedulers.computation())
+                .distinctUntilChanged()
+                .subscribe(this::onCurrencyClick, this::onError);
+        Disposable valueDisposable = currencyAdapter.getValueSubject()
+                .subscribeOn(Schedulers.computation())
+                .subscribe(this::onCurrencyValueChanged, this::onError);
+        disposables.addAll(clickDisposable, valueDisposable);
         currenciesView.setAdapter(currencyAdapter);
         currenciesView.setLayoutManager(new LinearLayoutManager(getContext()));
         RecyclerView.ItemAnimator itemAnimator = currenciesView.getItemAnimator();
@@ -130,14 +143,12 @@ public class CurrencyFragment extends Fragment implements CurrencyAdapter.Listen
         }
     }
 
-    @Override
-    public void onCurrencyClick(@NonNull Currency currency) {
+    private void onCurrencyClick(@NonNull Currency currency) {
         currencyController.setMainCurrency(currency);
         currenciesView.scrollToPosition(0);
     }
 
-    @Override
-    public void onCurrencyValueChanged(@Nullable CharSequence text) {
+    private void onCurrencyValueChanged(@Nullable CharSequence text) {
         float value;
         if (TextUtils.isEmpty(text)) {
             value = 0;
@@ -202,14 +213,7 @@ public class CurrencyFragment extends Fragment implements CurrencyAdapter.Listen
     }
 
     private void onError(@NonNull Throwable throwable) {
-        Log.e(TAG, "Can't update currencies", throwable);
-        if (getContext() == null) {
-            return;
-        }
-        if (snackbars == null) {
-            return;
-        }
-        snackbars.showShort(R.string.cant_update);
+        Log.e(TAG, "App error", throwable);
     }
 
 }
