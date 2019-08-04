@@ -4,7 +4,7 @@ import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.StringRes;
 
-import com.otopba.revolut.Currency;
+import com.otopba.revolut.storage.Currency;
 import com.otopba.revolut.R;
 
 public class CurrencyModel {

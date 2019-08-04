@@ -2,15 +2,13 @@ package com.otopba.revolut.storage;
 
 import androidx.annotation.NonNull;
 
-import com.otopba.revolut.Currency;
-
 import java.util.Collections;
 import java.util.Map;
 
 public class InMemoryCurrencyStorage implements CurrencyStorage {
 
     private long date;
-    private Map<Currency, Float> rates;
+    private volatile Map<Currency, Float> rates;
 
     @Override
     public void saveRates(@NonNull Map<Currency, Float> rates, long date) {

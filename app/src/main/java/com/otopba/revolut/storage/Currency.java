@@ -1,4 +1,4 @@
-package com.otopba.revolut;
+package com.otopba.revolut.storage;
 
 public enum Currency {
     EUR,

@@ -3,7 +3,7 @@ package com.otopba.revolut.ui.currency;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.otopba.revolut.Currency;
+import com.otopba.revolut.storage.Currency;
 import com.otopba.revolut.utils.Formatter;
 
 import java.util.ArrayList;

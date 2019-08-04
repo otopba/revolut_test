@@ -18,12 +18,14 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.airbnb.lottie.LottieAnimationView;
 import com.otopba.revolut.App;
-import com.otopba.revolut.Currency;
 import com.otopba.revolut.R;
 import com.otopba.revolut.controller.ControllerUpdate;
 import com.otopba.revolut.controller.CurrencyController;
+import com.otopba.revolut.controller.error.CurrencyError;
+import com.otopba.revolut.controller.error.NoConnectionError;
+import com.otopba.revolut.storage.Currency;
 import com.otopba.revolut.utils.Formatter;
-import com.otopba.revolut.utils.Toasts;
+import com.otopba.revolut.utils.Snackbars;
 
 import java.util.Collections;
 
@@ -48,6 +50,7 @@ public class CurrencyFragment extends Fragment implements CurrencyAdapter.Listen
     private CurrencyAdapter currencyAdapter;
     private LottieAnimationView loadingView;
     private CompositeDisposable disposables;
+    private Snackbars snackbars;
 
     public static CurrencyFragment newInstance() {
         return new CurrencyFragment();
@@ -71,6 +74,7 @@ public class CurrencyFragment extends Fragment implements CurrencyAdapter.Listen
         View view = inflater.inflate(R.layout.fragment_currency, container, false);
         currenciesView = view.findViewById(R.id.fragment_currency__currencies);
         loadingView = view.findViewById(R.id.fragment_currency__loading);
+        snackbars = new Snackbars(currenciesView);
         setupRecyclerView(inflater);
         return view;
     }
@@ -157,7 +161,7 @@ public class CurrencyFragment extends Fragment implements CurrencyAdapter.Listen
         actionBar.setTitle(title);
     }
 
-    public void onUpdate(@NonNull ControllerUpdate controllerUpdate) {
+    private void onUpdate(@NonNull ControllerUpdate controllerUpdate) {
         Log.d(TAG, String.format("Controller update %s", controllerUpdate));
         currencyAdapterState.update(controllerUpdate.values, controllerUpdate.mainCurrency);
         currencyAdapter.updateCurrencies(currencyAdapterState.getValues(), controllerUpdate.mainCurrency);
@@ -166,12 +170,30 @@ public class CurrencyFragment extends Fragment implements CurrencyAdapter.Listen
         setupVisibility();
     }
 
-    public void onError(Throwable throwable) {
-        Log.e(TAG, "Can't update currencies");
+    private void onError(@NonNull CurrencyError currencyError) {
+        Log.e(TAG, String.format("Can't update currencies: %s", currencyError));
         if (getContext() == null) {
             return;
         }
-        Toasts.showShort(getContext(), R.string.api_error);
+        if (snackbars == null) {
+            return;
+        }
+        if (currencyError instanceof NoConnectionError) {
+            snackbars.showShort(R.string.no_connection);
+        } else {
+            snackbars.showShort(R.string.cant_update);
+        }
+    }
+
+    private void onError(@NonNull Throwable throwable) {
+        Log.e(TAG, "Can't update currencies", throwable);
+        if (getContext() == null) {
+            return;
+        }
+        if (snackbars == null) {
+            return;
+        }
+        snackbars.showShort(R.string.cant_update);
     }
 
 }

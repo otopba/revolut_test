@@ -1,5 +1,11 @@
 package com.otopba.revolut.dependency;
 
+import android.content.Context;
+
+import androidx.annotation.NonNull;
+
+import com.otopba.revolut.connection.ConnectionManager;
+import com.otopba.revolut.connection.ConnectionManagerImpl;
 import com.otopba.revolut.controller.CurrencyController;
 import com.otopba.revolut.controller.RevolutCurrencyController;
 import com.otopba.revolut.provider.CurrencyProvider;
@@ -17,6 +23,17 @@ import dagger.Provides;
 @Module
 public class AppModule {
 
+    private final Context context;
+
+    public AppModule(@NonNull Context context) {
+        this.context = context;
+    }
+
+    @Provides
+    public Context context() {
+        return context;
+    }
+
     @Provides
     @Singleton
     CurrencyProvider provideApi() {
@@ -31,14 +48,21 @@ public class AppModule {
 
     @Provides
     @Singleton
-    CurrencyController provideCurrencyController(CurrencyStorage currencyStorage, CurrencyProvider currencyProvider) {
-        return new RevolutCurrencyController(currencyStorage, currencyProvider);
+    CurrencyController provideCurrencyController(CurrencyStorage currencyStorage, CurrencyProvider currencyProvider,
+                                                 ConnectionManager connectionManager) {
+        return new RevolutCurrencyController(currencyStorage, currencyProvider, connectionManager);
     }
 
     @Provides
     @Singleton
-    Formatter provideFormater() {
+    Formatter provideFormatter() {
         return new RevolutFormatter();
+    }
+
+    @Provides
+    @Singleton
+    ConnectionManager provideConnectionManager(Context context) {
+        return new ConnectionManagerImpl(context);
     }
 
 }

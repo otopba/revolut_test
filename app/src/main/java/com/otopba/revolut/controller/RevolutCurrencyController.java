@@ -1,12 +1,18 @@
 package com.otopba.revolut.controller;
 
 import android.util.ArrayMap;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
-import com.otopba.revolut.Currency;
 import com.otopba.revolut.api.CurrencyUpdate;
+import com.otopba.revolut.connection.ConnectionManager;
+import com.otopba.revolut.controller.error.ApiError;
+import com.otopba.revolut.controller.error.CurrencyError;
+import com.otopba.revolut.controller.error.NoConnectionError;
 import com.otopba.revolut.provider.CurrencyProvider;
+import com.otopba.revolut.storage.Currency;
 import com.otopba.revolut.storage.CurrencyStorage;
 
 import java.util.Calendar;
@@ -24,54 +30,87 @@ import io.reactivex.subjects.Subject;
 
 public class RevolutCurrencyController implements CurrencyController {
 
-    private static final long INTERVAL_SEC = 1;
+    private static final String TAG = RevolutCurrencyController.class.getName();
+
+    private static final long UPDATE_INTERVAL_SEC = 1;
+    private final Subject<ControllerUpdate> updateSubject = BehaviorSubject.create();
+    private final Subject<CurrencyError> errorSubject = PublishSubject.create();
     private final CurrencyStorage storage;
     private final CurrencyProvider provider;
-    private Subject<ControllerUpdate> updateSubject;
-    private Subject<Throwable> errorSubject;
-    private Disposable disposable;
-    private Currency mainCurrency;
-    private float mainCurrencyValue;
+    private final ConnectionManager connectionManager;
+    private Disposable currencyDisposable;
+    private Disposable connectionDisposable;
 
-    public RevolutCurrencyController(@NonNull CurrencyStorage storage, @NonNull CurrencyProvider provider) {
+    private volatile Currency mainCurrency;
+    private volatile float mainCurrencyValue;
+
+    public RevolutCurrencyController(@NonNull CurrencyStorage storage, @NonNull CurrencyProvider provider, @NonNull ConnectionManager connectionManager) {
         this.storage = storage;
         this.provider = provider;
+        this.connectionManager = connectionManager;
     }
 
     @Override
     public void start() {
-        if (disposable == null || disposable.isDisposed()) {
-            disposable = Observable.interval(0, INTERVAL_SEC, TimeUnit.SECONDS)
-                    .observeOn(Schedulers.io())
-                    .subscribeOn(Schedulers.io())
-                    .flatMap((Function<Long, ObservableSource<CurrencyUpdate>>) aLong -> provider.getCurrency().toObservable())
-                    .subscribe(this::updateCurrency, throwable -> notifyError(throwable));
+        if (connectionDisposable != null && !connectionDisposable.isDisposed()) {
+            return;
         }
+        connectionDisposable = connectionManager.getConnectionSubject()
+                .observeOn(Schedulers.io())
+                .subscribeOn(Schedulers.io())
+                .subscribe(this::onConnection, this::notifyNoConnectionError);
+    }
+
+    private void onConnection(boolean connected) {
+        Log.d(TAG, String.format("Connection change to %s", connected));
+        if (connected) {
+            requestCurrency();
+        } else {
+            disposeCurrency();
+            notifyNoConnectionError(null);
+        }
+    }
+
+    private void requestCurrency() {
+        if (currencyDisposable != null && !currencyDisposable.isDisposed()) {
+            return;
+        }
+        currencyDisposable = Observable.interval(0, UPDATE_INTERVAL_SEC, TimeUnit.SECONDS)
+                .observeOn(Schedulers.io())
+                .subscribeOn(Schedulers.io())
+                .flatMap((Function<Long, ObservableSource<CurrencyUpdate>>) aLong -> provider.getCurrency().toObservable())
+                .subscribe(this::updateCurrency, this::notifyApiError);
     }
 
     @Override
     public void stop() {
-        if (disposable != null && !disposable.isDisposed()) {
-            disposable.dispose();
-            disposable = null;
+        disposeCurrency();
+        disposeConnection();
+    }
+
+    private void disposeConnection() {
+        if (connectionDisposable != null && !connectionDisposable.isDisposed()) {
+            connectionDisposable.dispose();
+            connectionDisposable = null;
+        }
+    }
+
+    private void disposeCurrency() {
+        if (currencyDisposable != null && !currencyDisposable.isDisposed()) {
+            currencyDisposable.dispose();
+            currencyDisposable = null;
         }
     }
 
     @NonNull
     @Override
     public Subject<ControllerUpdate> getUpdateSubject() {
-        if (updateSubject == null) {
-            updateSubject = BehaviorSubject.create();
-        }
         return updateSubject;
     }
 
     @NonNull
     @Override
-    public Subject<Throwable> getErrorSubject() {
-        if (errorSubject == null) {
-            errorSubject = PublishSubject.create();
-        }
+    public Subject<CurrencyError> getErrorSubject() {
         return errorSubject;
     }
 
@@ -117,8 +156,12 @@ public class RevolutCurrencyController implements CurrencyController {
         notifyUpdate(values);
     }
 
-    private void notifyError(Throwable throwable) {
-        errorSubject.onNext(throwable);
+    private void notifyNoConnectionError(@Nullable Throwable throwable) {
+        errorSubject.onNext(new NoConnectionError(throwable));
+    }
+
+    private void notifyApiError(@Nullable Throwable throwable) {
+        errorSubject.onNext(new ApiError(throwable));
     }
 
     private void notifyUpdate(@NonNull Map<Currency, Float> values) {

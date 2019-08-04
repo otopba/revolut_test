@@ -68,5 +68,6 @@
     <string name="zar_subtitle">South African rand</string>
     <string name="icon">icon</string>
     <string name="last_update">Last update at %s</string>
-    <string name="api_error">Can\'t update currencies</string>
+    <string name="no_connection">No internet connection</string>
+    <string name="cant_update">Can\'t update currencies</string>
 </resources>

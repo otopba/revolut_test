@@ -12,7 +12,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.otopba.revolut.Currency;
+import com.otopba.revolut.storage.Currency;
 import com.otopba.revolut.R;
 import com.otopba.revolut.ui.SimpleTextWatcher;
 import com.otopba.revolut.utils.KeyboardUtils;

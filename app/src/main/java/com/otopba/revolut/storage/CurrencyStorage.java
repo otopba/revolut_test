@@ -2,8 +2,6 @@ package com.otopba.revolut.storage;
 
 import androidx.annotation.NonNull;
 
-import com.otopba.revolut.Currency;
-
 import java.util.Map;
 
 public interface CurrencyStorage {

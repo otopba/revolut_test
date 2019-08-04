@@ -1,6 +1,6 @@
 package com.otopba.revolut.api;
 
-import com.otopba.revolut.Currency;
+import com.otopba.revolut.storage.Currency;
 
 import java.util.Map;
 
