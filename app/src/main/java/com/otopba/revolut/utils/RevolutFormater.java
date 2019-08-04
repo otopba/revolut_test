@@ -22,7 +22,7 @@ public class RevolutFormater implements Formater {
 
     @Override
     public float formatFromCurrencyValue(@NonNull String text) {
-        text = text.trim();
+        text = text.trim().replace(",", ".");
         float value;
         try {
             value = Float.parseFloat(text);
