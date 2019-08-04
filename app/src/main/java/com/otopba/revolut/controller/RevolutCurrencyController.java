@@ -3,7 +3,6 @@ package com.otopba.revolut.controller;
 import android.util.ArrayMap;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.core.util.Consumer;
 
 import com.otopba.revolut.Currency;
@@ -50,7 +49,7 @@ public class RevolutCurrencyController implements CurrencyController {
                     .observeOn(Schedulers.io())
                     .subscribeOn(Schedulers.io())
                     .flatMap((Function<Long, ObservableSource<CurrencyUpdate>>) aLong -> provider.getCurrency().toObservable())
-                    .subscribe(this::updateCurrency);//TODO: обработать ошибки
+                    .subscribe(this::updateCurrency, throwable -> notifyError());
         }
     }
 
@@ -106,6 +105,10 @@ public class RevolutCurrencyController implements CurrencyController {
             values.put(entry.getKey(), entry.getValue() * factor);
         }
         notifyUpdate(values, storage.getDate());
+    }
+
+    public void notifyError() {
+        notifyListeners(Listener::onError);
     }
 
     public void notifyUpdate(@NonNull Map<Currency, Float> values, long date) {

@@ -19,5 +19,7 @@ public interface CurrencyController {
 
     interface Listener {
         void onUpdate(@NonNull Map<Currency, Float> values, @Nullable Currency mainCurrency, long date);
+
+        void onError();
     }
 }

@@ -16,11 +16,13 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.airbnb.lottie.LottieAnimationView;
 import com.otopba.revolut.App;
 import com.otopba.revolut.Currency;
 import com.otopba.revolut.R;
 import com.otopba.revolut.controller.CurrencyController;
 import com.otopba.revolut.utils.Formatter;
+import com.otopba.revolut.utils.Toasts;
 
 import java.util.Collections;
 import java.util.Map;
@@ -34,13 +36,14 @@ public class CurrencyFragment extends Fragment implements CurrencyAdapter.Listen
     public static final String TAG = CurrencyFragment.class.getName();
 
     @Inject
-    Formatter formater;
+    Formatter formatter;
     @Inject
     CurrencyController currencyController;
 
     private CurrencyAdapterState currencyAdapterState;
     private RecyclerView currenciesView;
     private CurrencyAdapter currencyAdapter;
+    private LottieAnimationView loadingView;
 
     public static CurrencyFragment newInstance() {
         return new CurrencyFragment();
@@ -53,7 +56,7 @@ public class CurrencyFragment extends Fragment implements CurrencyAdapter.Listen
             throw new RuntimeException("Activity is null");
         }
         ((App) activity.getApplication()).getAppComponent().inject(this);
-        currencyAdapterState = new CurrencyAdapterState(formater);
+        currencyAdapterState = new CurrencyAdapterState(formatter);
         super.onCreate(savedInstanceState);
     }
 
@@ -63,6 +66,7 @@ public class CurrencyFragment extends Fragment implements CurrencyAdapter.Listen
                              @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_currency, container, false);
         currenciesView = view.findViewById(R.id.fragment_currency__currencies);
+        loadingView = view.findViewById(R.id.fragment_currency__loading);
         setupRecyclerView(inflater);
         return view;
     }
@@ -70,7 +74,18 @@ public class CurrencyFragment extends Fragment implements CurrencyAdapter.Listen
     @Override
     public void onResume() {
         super.onResume();
+        setupVisibility();
         currencyController.registerListener(this);
+    }
+
+    private void setupVisibility() {
+        if (currencyAdapterState.isEmpty()) {
+            loadingView.setVisibility(View.VISIBLE);
+            currenciesView.setVisibility(View.GONE);
+        } else {
+            loadingView.setVisibility(View.GONE);
+            currenciesView.setVisibility(View.VISIBLE);
+        }
     }
 
     @Override
@@ -97,7 +112,7 @@ public class CurrencyFragment extends Fragment implements CurrencyAdapter.Listen
         if (TextUtils.isEmpty(text)) {
             value = 0;
         } else {
-            value = formater.formatFromCurrencyValue(text.toString());
+            value = formatter.formatFromCurrencyValue(text.toString());
         }
         currencyController.setMainCurrencyValue(value);
     }
@@ -130,7 +145,14 @@ public class CurrencyFragment extends Fragment implements CurrencyAdapter.Listen
         currencyAdapter.updateCurrencies(currencyAdapterState.getValues(), mainCurrency);
         AndroidSchedulers.mainThread().scheduleDirect(() -> {
             currencyAdapter.notifyDataSetChanged();
-            setLastUpdateTime(formater.formatDate(date));
+            setLastUpdateTime(formatter.formatDate(date));
+            setupVisibility();
         });
+    }
+
+    @Override
+    public void onError() {
+        Log.e(TAG, "Can't update currencies");
+        AndroidSchedulers.mainThread().scheduleDirect(() -> Toasts.showShort(getContext(), R.string.api_error));
     }
 }

@@ -64,6 +64,10 @@ public class CurrencyAdapterState {
         return result;
     }
 
+    public boolean isEmpty() {
+        return map.values().isEmpty();
+    }
+
     @NonNull
     private CurrencyValue createNewCurrencyValue(@NonNull Currency currency, @NonNull String value) {
         switch (currency) {
