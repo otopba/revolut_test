@@ -41,6 +41,7 @@ import com.otopba.revolut.ui.theme.AppTheme;
 import com.otopba.revolut.ui.theme.Colored;
 import com.otopba.revolut.ui.theme.Colors;
 import com.otopba.revolut.utils.Formatter;
+import com.otopba.revolut.utils.KeyboardUtils;
 import com.otopba.revolut.utils.Snackbars;
 
 import java.util.Collections;
@@ -164,11 +165,25 @@ public class CurrencyFragment extends Fragment implements Colored, MenuItem.OnMe
                 .subscribe(this::onCurrencyValueChanged, this::onError);
         disposables.addAll(clickDisposable, valueDisposable);
         currenciesView.setAdapter(currencyAdapter);
-        currenciesView.setLayoutManager(new LinearLayoutManager(getContext()));
         RecyclerView.ItemAnimator itemAnimator = currenciesView.getItemAnimator();
         if (itemAnimator instanceof SimpleItemAnimator) {
             ((SimpleItemAnimator) itemAnimator).setSupportsChangeAnimations(false);
         }
+        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getContext());
+        currenciesView.setLayoutManager(linearLayoutManager);
+        currenciesView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                CurrencyFragment.this.onScrolled(linearLayoutManager);
+            }
+        });
+    }
+
+    private void onScrolled(LinearLayoutManager linearLayoutManager) {
+        if (getActivity() == null || linearLayoutManager.findFirstVisibleItemPosition() <= 0) {
+            return;
+        }
+        KeyboardUtils.hideKeyBoard(getActivity());
     }
 
     private void onCurrencyClick(@NonNull Currency currency) {
