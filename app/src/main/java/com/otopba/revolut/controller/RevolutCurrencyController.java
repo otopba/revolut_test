@@ -31,18 +31,24 @@ public class RevolutCurrencyController implements CurrencyController {
     public RevolutCurrencyController(@NonNull CurrencyStorage storage, @NonNull CurrencyProvider provider) {
         this.storage = storage;
         this.provider = provider;
-        requestCurrency();
     }
 
     private void requestCurrency() {
-        disposable = provider.getCurrency()
-                .observeOn(Schedulers.io())
-                .subscribeOn(Schedulers.io())
-                .subscribe(this::updateCurrency);//TODO: обработать ошибки
+        if (listeners.isEmpty()) {
+            if (disposable != null && !disposable.isDisposed()) {
+                disposable.dispose();
+                disposable = null;
+            }
+        } else if (disposable == null || disposable.isDisposed()) {
+            disposable = provider.getCurrency()
+                    .observeOn(Schedulers.io())
+                    .subscribeOn(Schedulers.io())
+                    .subscribe(this::updateCurrency);//TODO: обработать ошибки
+        }
     }
 
     private void updateCurrency(@NonNull CurrencyUpdate currencyUpdate) {
-        storage.saveRates(currencyUpdate.rates, 0); //TODO: currencyUpdate.date
+        storage.saveRates(currencyUpdate.rates, currencyUpdate.date);
         sync();
     }
 
@@ -71,18 +77,19 @@ public class RevolutCurrencyController implements CurrencyController {
     @Override
     public void registerListener(@NonNull Listener listener) {
         listeners.add(listener);
-        sync();
+        requestCurrency();
     }
 
     @Override
     public void unregisterListener(@NonNull Listener listener) {
         listeners.remove(listener);
+        requestCurrency();
     }
 
     private void sync() {
         Map<Currency, Float> rates = storage.getRates();
         if (mainCurrency == null) {
-            notifyUpdate(rates, null);
+            notifyUpdate(rates, storage.getDate());
             return;
         }
         float mainRate = storage.getRate(mainCurrency);
@@ -91,11 +98,11 @@ public class RevolutCurrencyController implements CurrencyController {
         for (Map.Entry<Currency, Float> entry : rates.entrySet()) {
             values.put(entry.getKey(), entry.getValue() * factor);
         }
-        notifyUpdate(values, mainCurrency);
+        notifyUpdate(values, storage.getDate());
     }
 
-    public void notifyUpdate(@NonNull Map<Currency, Float> values, @Nullable Currency mainCurrency) {
-        notifyListeners(listener -> listener.onUpdate(values, mainCurrency));
+    public void notifyUpdate(@NonNull Map<Currency, Float> values, @Nullable String date) {
+        notifyListeners(listener -> listener.onUpdate(values, mainCurrency, date));
     }
 
     public void notifyListeners(@NonNull Consumer<Listener> action) {

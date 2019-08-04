@@ -1,6 +1,7 @@
 package com.otopba.revolut.storage;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.otopba.revolut.Currency;
 
@@ -9,12 +10,13 @@ import java.util.Map;
 
 public class InMemoryCurrencyStorage implements CurrencyStorage {
 
-    private long date;
+    private String date;
     private Map<Currency, Float> rates;
 
     @Override
-    public void saveRates(@NonNull Map<Currency, Float> rates, long date) {
+    public void saveRates(@NonNull Map<Currency, Float> rates, @NonNull String date) {
         this.rates = rates;
+        this.date = date;
     }
 
     @NonNull
@@ -36,6 +38,12 @@ public class InMemoryCurrencyStorage implements CurrencyStorage {
             return 0;
         }
         return value;
+    }
+
+    @Nullable
+    @Override
+    public String getDate() {
+        return date;
     }
 
 }

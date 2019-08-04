@@ -18,6 +18,7 @@ public interface CurrencyController {
     void unregisterListener(@NonNull Listener listener);
 
     interface Listener {
-        void onUpdate(@NonNull Map<Currency, Float> values, @Nullable Currency mainCurrency);
+        void onUpdate(@NonNull Map<Currency, Float> values, @Nullable Currency mainCurrency,
+                      @Nullable String date);
     }
 }

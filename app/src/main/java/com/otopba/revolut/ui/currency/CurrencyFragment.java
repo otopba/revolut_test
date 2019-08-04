@@ -125,9 +125,13 @@ public class CurrencyFragment extends Fragment implements CurrencyAdapter.Listen
     }
 
     @Override
-    public void onUpdate(@NonNull Map<Currency, Float> values, @Nullable Currency mainCurrency) {
+    public void onUpdate(@NonNull Map<Currency, Float> values, @Nullable Currency mainCurrency,
+                         @Nullable String date) {
         currencyAdapterState.update(values, mainCurrency);
         currencyAdapter.updateCurrencies(currencyAdapterState.getValues(), mainCurrency);
-        AndroidSchedulers.mainThread().scheduleDirect(() -> currencyAdapter.notifyDataSetChanged());
+        AndroidSchedulers.mainThread().scheduleDirect(() -> {
+            currencyAdapter.notifyDataSetChanged();
+            setLastUpdateTime(date);
+        });
     }
 }
